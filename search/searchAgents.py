@@ -1,3 +1,4 @@
+# coding=UTF-8
 # searchAgents.py
 # ---------------
 
@@ -259,7 +260,6 @@ def euclideanHeuristic(position, problem, info={}):
 class CornersProblem(search.SearchProblem):
     """
     This search problem finds paths through all four corners of a layout.
-
     You must select a suitable state space and successor function
     """
 
@@ -287,6 +287,7 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
+        #初始节点（开始位置，角落情况）
         allCorners = (False, False, False, False)
         start = (self.startingPosition, allCorners)
         return start
@@ -297,6 +298,7 @@ class CornersProblem(search.SearchProblem):
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
+        #目标测试：四个角落都访问过
         corners = state[1]
         boolean = corners[0] and corners[1] and corners[2] and corners[3]
         return boolean
@@ -312,24 +314,23 @@ class CornersProblem(search.SearchProblem):
             state, 'action' is the action required to get there, and 'stepCost'
             is the incremental cost of expanding to that successor
         """
-
         successors = []
+        #遍历能够做的后续动作
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
             # Add a successor state to the successor list if the action is legal
-            # Here's a code snippet for figuring out whether a new position hits a wall:
-            #   x,y = currentPosition
-            #   dx, dy = Actions.directionToVector(action)
-            #   nextx, nexty = int(x + dx), int(y + dy)
-            #   hitsWall = self.walls[nextx][nexty]
             "*** YOUR CODE HERE ***"
+             #   x,y = currentPosition
             x,y = state[0]
             holdCorners = state[1]
+            #   dx, dy = Actions.directionToVector(action)
             dx, dy = Actions.directionToVector(action)
             nextx, nexty = int(x + dx), int(y + dy)
             hitsWall = self.walls[nextx][nexty]
             newCorners = ()
             nextState = (nextx, nexty)
+            #不碰墙
             if not hitsWall:
+                #能到达角落，四种情况判断
                 if nextState in self.corners:
                     if nextState == (self.right, 1):
                         newCorners = [True, holdCorners[1], holdCorners[2], holdCorners[3]]
@@ -340,6 +341,7 @@ class CornersProblem(search.SearchProblem):
                     elif nextState == (1,1):
                         newCorners = [holdCorners[0], holdCorners[1], holdCorners[2], True]
                     successor = ((nextState, newCorners), action,  1)
+                #去角落的中途
                 else:
                     successor = ((nextState, holdCorners), action, 1)
                 successors.append(successor)
@@ -474,57 +476,44 @@ class AStarFoodSearchAgent(SearchAgent):
         
 def foodHeuristic(state, problem):
     """
-    Your heuristic for the FoodSearchProblem goes here.
+    状态是一个元组（pacmanPosition，foodGrid）
+    其中foodGrid是一个Grid（参见game.py）
+    调用foodGrid.asList（）来获取食物坐标列表。
 
-    This heuristic must be consistent to ensure correctness.  First, try to come
-    up with an admissible heuristic; almost all admissible heuristics will be
-    consistent as well.
-
-    If using A* ever finds a solution that is worse uniform cost search finds,
-    your heuristic is *not* consistent, and probably not admissible!  On the
-    other hand, inadmissible or inconsistent heuristics may find optimal
-    solutions, so be careful.
-
-    The state is a tuple ( pacmanPosition, foodGrid ) where foodGrid is a Grid
-    (see game.py) of either True or False. You can call foodGrid.asList() to get
-    a list of food coordinates instead.
-
-    If you want access to info like walls, capsules, etc., you can query the
-    problem.  For example, problem.walls gives you a Grid of where the walls
-    are.
-
-    If you want to *store* information to be reused in other calls to the
-    heuristic, there is a dictionary called problem.heuristicInfo that you can
-    use. For example, if you only want to count the walls once and store that
-    value, try: problem.heuristicInfo['wallCount'] = problem.walls.count()
-    Subsequent calls to this heuristic can access
-    problem.heuristicInfo['wallCount']
+    如果你想存储信息，可以在其他调用中重复使用
+    启发式，你可以使用一个名为problem.heuristicInfo的字典
+    例如，如果您只想计算一次墙壁并存储它
+    尝试：problem.heuristicInfo ['wallCount'] = problem.walls.count（）
+    对此启发式的后续调用可以访问
+    problem.heuristicInfo [ 'wallCount']
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
     hvalue = 0
     food_available = []
     total_distance = 0
+    #处理食物的位置，以此构造启发式函数
     for i in range(0,foodGrid.width):
         for j in range(0,foodGrid.height):
             if (foodGrid[i][j] == True):
                 food_location = (i,j)
                 food_available.append(food_location)
-    
+    #没有食物就不用找了
     if (len(food_available) == 0):
             return 0        
-    
+    #初始化距离(current_food,select_food,distance)
     max_distance=((0,0),(0,0),0)
-    
     for current_food in food_available:
         for select_food in food_available:
             if(current_food==select_food):
                 pass
             else:
+                #使用曼哈顿距离构造启发式函数
                 distance = util.manhattanDistance(current_food,select_food)
                 if(max_distance[2] < distance):
                     max_distance = (current_food,select_food,distance)
-
+    #把起点和第一个搜索的食物连接起来
+    #处理只有一个食物的情况
     if(max_distance[0]==(0,0) and max_distance[1]==(0,0)):
         hvalue = util.manhattanDistance(position,food_available[0])
     else: 
@@ -615,8 +604,7 @@ class AnyFoodSearchProblem(PositionSearchProblem):
 # Mini-contest 1 #
 ##################
 class ApproximateSearchAgent(Agent):
-    "Implement your contest entry here.  Change anything but the class name."
-    def registerInitialState(self, state):
+        def registerInitialState(self, state):
         self.walls = state.getWalls()
         self.mark = 0
         self.curPos = state.getPacmanPosition()
