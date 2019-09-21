@@ -604,7 +604,7 @@ class AnyFoodSearchProblem(PositionSearchProblem):
 # Mini-contest 1 #
 ##################
 class ApproximateSearchAgent(Agent):
-        def registerInitialState(self, state):
+    def registerInitialState(self, state):
         self.walls = state.getWalls()
         self.mark = 0
         self.curPos = state.getPacmanPosition()
